@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from rest_framework.viewsets import ModelViewSet
 from .serializer import CompanySerializer
+from .models import Company
+
 
 class CompanyViewSet(ModelViewSet):
     serializer_class = CompanySerializer
