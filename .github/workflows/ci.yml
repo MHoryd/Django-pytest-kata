@@ -34,6 +34,7 @@ jobs:
 
     - name: Apply Migrations
       run: |
+        python api/sample_app/manage.py makemigrations
         python api/sample_app/manage.py migrate
 
     - name: Run Tests
