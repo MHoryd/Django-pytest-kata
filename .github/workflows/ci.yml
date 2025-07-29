@@ -25,13 +25,17 @@ jobs:
       run: |
         python -m pip install --upgrade pipenv
         pipenv install --system
-
+              
     - name: Set environment variables
       run: |
         echo "DJANGO_SETTINGS_MODULE=api.sample_app.sample_app.settings" >> $GITHUB_ENV
         echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
         echo "Django_app_secret_key=${{ secrets.DJANGO_APP_SECRET_KEY }}" >> $GITHUB_ENV
-        
+
+    - name: Apply Migrations
+      run: |
+        python api/sample_app/manage.py migrate
+
     - name: Run Tests
       run: |
         pytest -s -v --durations=0
