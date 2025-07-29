@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Company
+from api.sample_app.companies.models import Company
 
 
 @admin.register(Company)
