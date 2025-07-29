@@ -30,6 +30,7 @@ jobs:
       run: |
         echo "DJANGO_SETTINGS_MODULE=api.sample_app.sample_app.settings" >> $GITHUB_ENV
         echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+        echo "Django_app_secret_key=${{ secrets.DJANGO_APP_SECRET_KEY }}" >> $GITHUB_ENV
         
     - name: Run Tests
       run: |
