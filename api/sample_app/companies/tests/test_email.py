@@ -1,7 +1,6 @@
 import json
 from unittest.mock import patch
 from django.test import Client
-from api.sample_app.companies.views import send_company_email
 
 client = Client()
 
