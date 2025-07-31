@@ -1,4 +1,5 @@
 from django.urls import reverse
+from typing import List
 from api.sample_app.companies.models import Company
 import pytest
 import json
@@ -22,6 +23,16 @@ def company(**kwargs):  # -> Callable[..., Company]:
         return Company.objects.create(name=company_name, **kwargs)
 
     return _company_factory
+
+
+@pytest.fixture
+def companies(request, company) -> List[Company]:
+    companies = []
+    names = request.param
+    for name in names:
+        companies.append(company(name=name))
+
+    return companies
 
 
 # Test get companies
@@ -94,16 +105,11 @@ def test_create_company_with_wrong_status_should_succeed(client) -> None:
     assert "is not a valid choice." in response_content.get("status")[0]
 
 
-def test_multiple_companies_exists_should_succeed(client, company):
-    company1 = company(name="Company1")
-    company2 = company(name="Company2")
-    company3 = company()
-    company_names = {
-        company1.name,
-        company2.name,
-        company3.name,
-    }
-    print(company_names)
+@pytest.mark.parametrize(
+    "companies", [["Sample1", "Sample2"], ["Sample3", "Sample4"]], indirect=True
+)
+def test_multiple_companies_exists_should_succeed(client, companies):
+    company_names = set(map(lambda x: x.name, companies))
     response = client.get(companies_url)
     parsed_response = response.json()
     assert len(company_names) == len(parsed_response)
