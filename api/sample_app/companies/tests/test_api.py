@@ -1,11 +1,10 @@
-from django.test import Client
 from django.urls import reverse
 from api.sample_app.companies.models import Company
 import pytest
 import json
 
 
-client = Client()
+# client = Client()
 companies_url = reverse("companies-list")
 
 pytestmark = pytest.mark.django_db
@@ -16,16 +15,25 @@ def sample_company():
     return Company.objects.create(name="Some_company")
 
 
+@pytest.fixture
+def company(**kwargs):  # -> Callable[..., Company]:
+    def _company_factory(**kwargs):
+        company_name = kwargs.pop("name", "Sample Test Company")
+        return Company.objects.create(name=company_name, **kwargs)
+
+    return _company_factory
+
+
 # Test get companies
 
 
-def test_zero_companies_should_return_empty_list() -> None:
+def test_zero_companies_should_return_empty_list(client) -> None:
     response = client.get(companies_url)
     assert response.status_code == 200
     assert json.loads(response.content) == []
 
 
-def test_one_company_exists_should_succeed(sample_company) -> None:
+def test_one_company_exists_should_succeed(client, sample_company) -> None:
     response = client.get(companies_url)
     parsed = json.loads(response.content)
     assert response.status_code == 200
@@ -39,20 +47,22 @@ def test_one_company_exists_should_succeed(sample_company) -> None:
 # Test post companies
 
 
-def test_create_company_without_arguments_should_fail() -> None:
+def test_create_company_without_arguments_should_fail(client) -> None:
     response = client.post(path=companies_url)
     assert response.status_code == 400
     assert json.loads(response.content) == {"name": ["This field is required."]}
 
 
-def test_create_company_with_duplicated_name_should_fail(sample_company) -> None:
+def test_create_company_with_duplicated_name_should_fail(
+    client, sample_company
+) -> None:
     response = client.post(path=companies_url, data={"name": "Some_company"})
     parsed = json.loads(response.content)
     assert response.status_code == 400
     assert parsed["name"] == ["company with this name already exists."]
 
 
-def test_create_company_with_only_name_should_be_default() -> None:
+def test_create_company_with_only_name_should_be_default(client) -> None:
     response = client.post(path=companies_url, data={"name": "Some_company"})
     assert response.status_code == 201
     response_content = json.loads(response.content)
@@ -62,7 +72,7 @@ def test_create_company_with_only_name_should_be_default() -> None:
     assert response_content.get("notes") == ""
 
 
-def test_create_company_with_status_layoffs_should_succeed() -> None:
+def test_create_company_with_status_layoffs_should_succeed(client) -> None:
     response = client.post(
         path=companies_url, data={"name": "Some_company", "status": "Layoffs"}
     )
@@ -74,7 +84,7 @@ def test_create_company_with_status_layoffs_should_succeed() -> None:
     assert response_content.get("notes") == ""
 
 
-def test_create_company_with_wrong_status_should_succeed() -> None:
+def test_create_company_with_wrong_status_should_succeed(client) -> None:
     response = client.post(
         path=companies_url, data={"name": "Some_company", "status": "xyz"}
     )
@@ -82,3 +92,22 @@ def test_create_company_with_wrong_status_should_succeed() -> None:
     response_content = json.loads(response.content)
     assert "xyz" in str(response_content)
     assert "is not a valid choice." in response_content.get("status")[0]
+
+
+def test_multiple_companies_exists_should_succeed(client, company):
+    company1 = company(name="Company1")
+    company2 = company(name="Company2")
+    company3 = company()
+    company_names = {
+        company1.name,
+        company2.name,
+        company3.name,
+    }
+    print(company_names)
+    response = client.get(companies_url)
+    parsed_response = response.json()
+    assert len(company_names) == len(parsed_response)
+    response_company_names = set(
+        map(lambda company: company.get("name"), parsed_response)
+    )
+    assert company_names == response_company_names
