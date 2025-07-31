@@ -1,6 +1,5 @@
 import json
 from unittest.mock import patch
-import pytest_django
 
 
 @patch("api.sample_app.companies.views.requests.post")

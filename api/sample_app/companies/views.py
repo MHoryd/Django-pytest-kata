@@ -14,7 +14,7 @@ class CompanyViewSet(ModelViewSet):
 
 
 @api_view(http_method_names=["POST"])
-def send_company_email(request: Request)  -> Response:
+def send_company_email(request: Request) -> Response:
     """Method to sed email via mailgun provider. Must provide"""
     response = requests.post(
         url=str(os.getenv("MAILGUN_ENDPOINT")),
